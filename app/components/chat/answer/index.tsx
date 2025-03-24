@@ -5,7 +5,7 @@ import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 import LoadingAnim from '../loading-anim'
 import type { FeedbackFunc } from '../type'
-import s from '../style.module.css'
+import styles from '../style.module.css'
 import ImageGallery from '../../base/image-gallery'
 import Thought from '../thought'
 import { randomString } from '@/utils/string'
@@ -14,6 +14,8 @@ import Tooltip from '@/app/components/base/tooltip'
 import WorkflowProcess from '@/app/components/workflow/workflow-process'
 import { Markdown } from '@/app/components/base/markdown'
 import type { Emoji } from '@/types/tools'
+import { autoDetectAndHighlightSQL } from '../utils/sql-highlight'
+import cn from 'classnames'
 
 const OperationBtn = ({ innerContent, onClick, className }: { innerContent: React.ReactNode; onClick?: () => void; className?: string }) => (
   <div
@@ -59,6 +61,8 @@ type IAnswerProps = {
   feedbackDisabled: boolean
   onFeedback?: FeedbackFunc
   isResponding?: boolean
+  showRespondingAnimation?: boolean
+  textToSpeechOption?: boolean
   allToolIcons?: Record<string, string | Emoji>
 }
 
@@ -68,12 +72,15 @@ const Answer: FC<IAnswerProps> = ({
   feedbackDisabled = false,
   onFeedback,
   isResponding,
+  showRespondingAnimation,
+  textToSpeechOption,
   allToolIcons,
 }) => {
   const { id, content, feedback, agent_thoughts, workflowProcess } = item
   const isAgentMode = !!agent_thoughts && agent_thoughts.length > 0
 
   const { t } = useTranslation()
+  const isThinking = !item.id
 
   /**
  * Render feedback results (distinguish between users and administrators)
@@ -128,16 +135,16 @@ const Answer: FC<IAnswerProps> = ({
     }
 
     return (
-      <div className={`${s.itemOperation} flex gap-2`}>
+      <div className={`${styles.itemOperation} flex gap-2`}>
         {userOperation()}
       </div>
     )
   }
 
-  const getImgs = (list?: VisionFile[]) => {
+  const getImgs = (list?: VisionFile[]): string[] => {
     if (!list)
       return []
-    return list.filter(file => file.type === 'image' && file.belongs_to === 'assistant')
+    return list.filter(file => file.type === 'image' && file.belongs_to === 'assistant').map(file => file.url)
   }
 
   const agentModeAnswer = (
@@ -158,48 +165,53 @@ const Answer: FC<IAnswerProps> = ({
           )}
 
           {getImgs(item.message_files).length > 0 && (
-            <ImageGallery srcs={getImgs(item.message_files).map(item => item.url)} />
+            <ImageGallery srcs={getImgs(item.message_files)} />
           )}
         </div>
       ))}
     </div>
   )
 
+  // 处理Markdown内容，添加SQL高亮功能
+  const renderContent = (content: string) => {
+    if (!content)
+      return null
+    
+    // 首先使用SQL高亮工具处理内容
+    const processedContent = autoDetectAndHighlightSQL(content)
+    
+    // 如果内容被处理过（包含HTML标签），直接使用dangerouslySetInnerHTML渲染
+    if (processedContent !== content && (processedContent.includes(`class="${styles.codeBlock}"`) || processedContent.includes(`class="${styles.codeContent}"`))) {
+      return (
+        <div 
+          className="prose prose-neutral max-w-none"
+          dangerouslySetInnerHTML={{ __html: processedContent }}
+        />
+      )
+    }
+    
+    // 否则使用原有的Markdown组件渲染
+    return (
+      <Markdown content={content} />
+    )
+  }
+
   return (
-    <div key={id}>
-      <div className='flex items-start'>
-        <div className={`${s.answerIcon} w-10 h-10 shrink-0`}>
-          {isResponding
-            && <div className={s.typeingIcon}>
-              <LoadingAnim type='avatar' />
-            </div>
-          }
+    <div className='flex mb-8' key={item.id ?? randomString(16)}>
+      <div className={`${styles.answerContainer} w-full`}>
+        <div 
+          className={`${styles.answer} w-auto`}
+          style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}
+        >
+          {isResponding && !item.content ? (
+            <LoadingAnim type='text' />
+          ) : (
+            <>
+              {renderContent(item.content || '')}
+            </>
+          )}
         </div>
-        <div className={`${s.answerWrap}`}>
-          <div className={`${s.answer} relative text-sm text-gray-900`}>
-            <div className={`ml-2 py-3 px-4 bg-gray-100 rounded-tr-2xl rounded-b-2xl ${workflowProcess && 'min-w-[480px]'}`}>
-              {workflowProcess && (
-                <WorkflowProcess data={workflowProcess} hideInfo />
-              )}
-              {(isResponding && (isAgentMode ? (!content && (agent_thoughts || []).filter(item => !!item.thought || !!item.tool).length === 0) : !content))
-                ? (
-                  <div className='flex items-center justify-center w-6 h-5'>
-                    <LoadingAnim type='text' />
-                  </div>
-                )
-                : (isAgentMode
-                  ? agentModeAnswer
-                  : (
-                    <Markdown content={content} />
-                  ))}
-            </div>
-            <div className='absolute top-[-14px] right-[-14px] flex flex-row justify-end gap-1'>
-              {!feedbackDisabled && !item.feedbackDisabled && renderItemOperation()}
-              {/* User feedback must be displayed */}
-              {!feedbackDisabled && renderFeedbackRating(feedback?.rating)}
-            </div>
-          </div>
-        </div>
+        {renderItemOperation()}
       </div>
     </div>
   )

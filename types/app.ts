@@ -89,6 +89,8 @@ export type IChatItem = {
 
 export type ChatItem = IChatItem & {
   isError?: boolean
+  errorType?: string
+  files?: VisionFile[]
   workflow_run_id?: string
   workflowProcess?: WorkflowProcess
 }

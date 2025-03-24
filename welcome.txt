@@ -17,21 +17,11 @@ export type IWelcomeProps = {
   onInputsChange: (inputs: Record<string, any>) => void
 }
 
-const defaultSiteInfo = {
-  title: '文本转SQL应用',
-  description: '轻松将自然语言转换为SQL查询语句',
-  logo: '',
-  icon: '',
-  copyright: '',
-  privacy_policy: '',
-  default_language: 'zh-Hans'
-}
-
 const Welcome: FC<IWelcomeProps> = ({
   conversationName,
   hasSetInputs,
   isPublicVersion,
-  siteInfo = defaultSiteInfo,
+  siteInfo,
   promptConfig,
   onStartChat,
   canEditInputs,
@@ -41,7 +31,6 @@ const Welcome: FC<IWelcomeProps> = ({
   const { t } = useTranslation()
 
   const handleStartChat = () => {
-    console.log('点击了开始对话按钮')
     onStartChat(savedInputs)
   }
 
@@ -49,8 +38,8 @@ const Welcome: FC<IWelcomeProps> = ({
     <div className='mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 pb-16'>
       <div className='mt-8 rounded-2xl bg-white p-4 shadow-sm sm:p-6 lg:p-8'>
         <div className={`${s.headerBg} p-6 rounded-t-xl mb-6`}>
-          <h1 className='text-2xl font-bold text-white'>{siteInfo?.title || '文本转SQL应用'}</h1>
-          <p className='text-indigo-100 mt-2'>{siteInfo?.description || '轻松将自然语言转换为SQL查询语句'}</p>
+          <h1 className='text-2xl font-bold text-white'>{siteInfo.title || '文本转SQL应用'}</h1>
+          <p className='text-indigo-100 mt-2'>{siteInfo.description || '轻松将自然语言转换为SQL查询语句'}</p>
         </div>
 
         <div className='space-y-6'>
@@ -83,7 +72,7 @@ const Welcome: FC<IWelcomeProps> = ({
           <div className='flex justify-center mt-8'>
             <button 
               onClick={handleStartChat}
-              className='bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-3 rounded-lg text-lg transition-colors duration-200'
+              className='btn btn-primary px-6 py-3 text-lg'
             >
               开始对话
             </button>

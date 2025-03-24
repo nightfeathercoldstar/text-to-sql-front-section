@@ -6,9 +6,10 @@ import Tool from './tool'
 import type { Emoji } from '@/types/tools'
 
 export type IThoughtProps = {
-  thought: ThoughtItem
+  thought?: ThoughtItem
+  agentThoughts?: ThoughtItem[]
   allToolIcons: Record<string, string | Emoji>
-  isFinished: boolean
+  isFinished?: boolean
 }
 
 function getValue(value: string, isValueArray: boolean, index: number) {
@@ -24,9 +25,36 @@ function getValue(value: string, isValueArray: boolean, index: number) {
 
 const Thought: FC<IThoughtProps> = ({
   thought,
+  agentThoughts,
   allToolIcons,
-  isFinished,
+  isFinished = true,
 }) => {
+  // 如果传入了agentThoughts，则渲染多个思考过程
+  if (agentThoughts && agentThoughts.length > 0) {
+    return (
+      <div className='my-2 space-y-3'>
+        {agentThoughts.map((item, i) => (
+          <SingleThought 
+            key={i} 
+            thought={item} 
+            allToolIcons={allToolIcons} 
+            isFinished={true} 
+          />
+        ))}
+      </div>
+    )
+  }
+
+  // 否则渲染单个思考过程
+  if (!thought) return null
+  return <SingleThought thought={thought} allToolIcons={allToolIcons} isFinished={isFinished} />
+}
+
+const SingleThought: FC<{
+  thought: ThoughtItem
+  allToolIcons: Record<string, string | Emoji>
+  isFinished: boolean
+}> = ({ thought, allToolIcons, isFinished }) => {
   const [toolNames, isValueArray]: [string[], boolean] = (() => {
     try {
       if (Array.isArray(JSON.parse(thought.tool)))
@@ -51,11 +79,12 @@ const Thought: FC<IThoughtProps> = ({
       {toolThoughtList.map((item: ToolInfoInThought, index) => (
         <Tool
           key={index}
-          payload={item}
+          info={item}
           allToolIcons={allToolIcons}
         />
       ))}
     </div>
   )
 }
-export default React.memo(Thought)
+
+export default Thought

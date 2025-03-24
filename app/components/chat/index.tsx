@@ -118,9 +118,9 @@ const Chat: FC<IChatProps> = ({
   }
 
   return (
-    <div className={cn(!feedbackDisabled && 'px-3.5', 'h-full')}>
+    <div className={cn(!feedbackDisabled && 'px-4', 'h-full flex flex-col')}>
       {/* Chat List */}
-      <div className="h-full space-y-[30px]">
+      <div className="flex-1 overflow-y-auto py-4 space-y-2">
         {chatList.map((item) => {
           if (item.isAnswer) {
             const isLast = item.id === chatList[chatList.length - 1].id
@@ -130,6 +130,8 @@ const Chat: FC<IChatProps> = ({
               feedbackDisabled={feedbackDisabled}
               onFeedback={onFeedback}
               isResponding={isResponding && isLast}
+              showRespondingAnimation={isResponding && isLast}
+              textToSpeechOption={false}
             />
           }
           return (
@@ -143,62 +145,73 @@ const Chat: FC<IChatProps> = ({
           )
         })}
       </div>
-      {
-        !isHideSendInput && (
-          <div className={cn(!feedbackDisabled && '!left-3.5 !right-3.5', 'absolute z-10 bottom-0 left-0 right-0')}>
-            <div className='p-[5.5px] max-h-[150px] bg-white border-[1.5px] border-gray-200 rounded-xl overflow-y-auto'>
-              {
-                visionConfig?.enabled && (
-                  <>
-                    <div className='absolute bottom-2 left-2 flex items-center'>
-                      <ChatImageUploader
-                        settings={visionConfig}
-                        onUpload={onUpload}
-                        disabled={files.length >= visionConfig.number_limits}
-                      />
-                      <div className='mx-1 w-[1px] h-4 bg-black/5' />
-                    </div>
-                    <div className='pl-[52px]'>
-                      <ImageList
-                        list={files}
-                        onRemove={onRemove}
-                        onReUpload={onReUpload}
-                        onImageLinkLoadSuccess={onImageLinkLoadSuccess}
-                        onImageLinkLoadError={onImageLinkLoadError}
-                      />
-                    </div>
-                  </>
-                )
-              }
-              <Textarea
-                className={`
-                  block w-full px-2 pr-[118px] py-[7px] leading-5 max-h-none text-sm text-gray-700 outline-none appearance-none resize-none
-                  ${visionConfig?.enabled && 'pl-12'}
-                `}
-                value={query}
-                onChange={handleContentChange}
-                onKeyUp={handleKeyUp}
-                onKeyDown={handleKeyDown}
-                autoSize
-              />
-              <div className="absolute bottom-2 right-2 flex items-center h-8">
-                <div className={`${s.count} mr-4 h-5 leading-5 text-sm bg-gray-50 text-gray-500`}>{query.trim().length}</div>
-                <Tooltip
-                  selector='send-tip'
-                  htmlContent={
-                    <div>
-                      <div>{t('common.operation.send')} Enter</div>
-                      <div>{t('common.operation.lineBreak')} Shift Enter</div>
-                    </div>
-                  }
+      
+      {!isHideSendInput && (
+        <div className={cn(!feedbackDisabled && '!left-4 !right-4', 'sticky bottom-4 left-0 right-0 z-10')}>
+          <div className='p-2 bg-white dark:bg-gray-800 border-[1.5px] border-gray-200 dark:border-gray-700 rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden'>
+            {
+              visionConfig?.enabled && (
+                <>
+                  <div className='absolute bottom-3 left-3 flex items-center'>
+                    <ChatImageUploader
+                      settings={visionConfig}
+                      onUpload={onUpload}
+                      disabled={files.length >= visionConfig.number_limits}
+                    />
+                    <div className='mx-1 w-[1px] h-4 bg-black/5 dark:bg-white/5' />
+                  </div>
+                  <div className='pl-[52px]'>
+                    <ImageList
+                      list={files}
+                      onRemove={onRemove}
+                      onReUpload={onReUpload}
+                      onImageLinkLoadSuccess={onImageLinkLoadSuccess}
+                      onImageLinkLoadError={onImageLinkLoadError}
+                    />
+                  </div>
+                </>
+              )
+            }
+            <Textarea
+              className={`
+                block w-full px-3 pr-[118px] py-2 leading-6 max-h-[120px] text-sm text-gray-700 dark:text-gray-200 outline-none appearance-none resize-none rounded-xl
+                ${visionConfig?.enabled && 'pl-12'}
+                focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400
+                dark:bg-gray-700 dark:border-gray-600
+              `}
+              value={query}
+              onChange={handleContentChange}
+              onKeyUp={handleKeyUp}
+              onKeyDown={handleKeyDown}
+              autoSize
+              placeholder="输入您的问题..."
+            />
+            <div className="absolute bottom-2 right-2 flex items-center h-8">
+              <div className={`${s.count} mr-2 h-6 leading-6 text-sm bg-gray-100 dark:bg-gray-700 px-2 rounded-full text-gray-500 dark:text-gray-300`}>{query.trim().length}</div>
+              <Tooltip
+                selector='send-tip'
+                htmlContent={
+                  <div>
+                    <div>{t('common.operation.send')} Enter</div>
+                    <div>{t('common.operation.lineBreak')} Shift Enter</div>
+                  </div>
+                }
+              >
+                <button 
+                  className={`w-8 h-8 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-full cursor-pointer shadow-md hover:shadow-lg transition-all duration-200 ${!query.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onClick={handleSend}
+                  disabled={!query.trim()}
                 >
-                  <div className={`${s.sendBtn} w-8 h-8 cursor-pointer rounded-md`} onClick={handleSend}></div>
-                </Tooltip>
-              </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </Tooltip>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
     </div>
   )
 }

@@ -14,7 +14,7 @@ import type { Emoji } from '@/types/tools'
 import AppIcon from '@/app/components/base/app-icon'
 
 type Props = {
-  payload: ToolInfoInThought
+  info: ToolInfoInThought
   allToolIcons?: Record<string, string | Emoji>
 }
 
@@ -45,11 +45,11 @@ const getIcon = (toolName: string, allToolIcons: Record<string, string | Emoji>)
 }
 
 const Tool: FC<Props> = ({
-  payload,
+  info,
   allToolIcons = {},
 }) => {
   const { t } = useTranslation()
-  const { name, input, isFinished, output } = payload
+  const { name, input, isFinished, output } = info
   const toolName = name.startsWith('dataset-') ? t('dataset.knowledge') : name
   const [isShowDetail, setIsShowDetail] = useState(false)
   const icon = getIcon(toolName, allToolIcons) as any
